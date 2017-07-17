@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta name="name" content="content">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+<style type="text/css" media="screen">
+	
+	#steps{
+		padding:0.5em 0;
+	}
+
+	.step-circle{
+		color:white;
+		background:#333;
+		padding:10px;
+		height:75px;
+		width:75px;
+		display:flex;
+		font-size:2em;
+		justify-content: center;
+		align-self:center;
+	}
+
+	.active{
+		background-color:#ff4d4d;
+	}
+</style>
+</head>
+<body>
+<!--
+There should be three steps
+1 Name of database
+2 Name of columns and specify the relationships
+3 How much rows should be generated
+
+-->
+<main class="container">
+	<h1 class="text-center">SQL Generator</h1>
+	<section id="steps" class="row justify-content-center bg-faded">
+	 	<div  class="col-3 row ">
+	 		
+	 		<div class="step-circle rounded-circle bg-primary ">
+	 			1
+	 		</div>
+	 	</div>
+	 	<div  class=" col-3  row  justify-content-center">
+	 		<div class="step-circle rounded-circle">
+	 			2
+	 		</div>
+	 	</div>
+	 	<div  class="col-3 row justify-content-end">
+	 		<div class="step-circle rounded-circle align-self-center">
+	 			3
+	 		</div>
+	 	</div>
+	</section>
+	<section>
+		
+	</section>
+</main>
+
+<script>
+	window.onload = function(){
+
+	}
+</script>
+</body>
+</html>

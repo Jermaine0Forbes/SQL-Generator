@@ -6,7 +6,7 @@ var obj=[
          values:["male","female"],
          type : "string",
          name : "sex" ,
-         multiple: false,
+         range: false,
          last:false,
          nested:false,
          dependent: false,
@@ -15,9 +15,9 @@ var obj=[
          not: false,
          equals : false,
          lessThan:false,
-         greaterThan:false,
-    },
-    {
+         greaterThan:false
+    
+    },{
          values:{
            male:['Michael','Tom','Noah','Benjamin','Sebastian','Daniel','David','James',
            'Jacob','Matthew','Samuel','Jonathan','Nathan','Cooper','John','Arthur','Jackson',
@@ -30,7 +30,7 @@ var obj=[
          },
          type : "string",
          name : "first_name" ,
-         multiple: true,
+         range: false,
          last:false,
          nested:true,
          dependent: "sex",
@@ -49,7 +49,7 @@ var obj=[
          ,
          type : "string",
          name : "last_name" ,
-         multiple: true,
+         range: false,
          last:false,
          nested:false,
          dependent: false,
@@ -65,7 +65,7 @@ var obj=[
          ,
          type : "number",
          name : "age" ,
-         multiple: false,
+         range: true,
          last:false,
          nested:false,
          dependent: false,
@@ -81,16 +81,16 @@ var obj=[
          ,
          type : "number",
          name : "weight" ,
-         multiple: true,
+         range: true,
          last:true,
          nested:false,
          dependent: false,
-         if:false,
+         if:true,
          between:false,
          not: false,
          equals : false,
-         lessThan:false,
-         greaterThan:false,
+         lessThan:150,
+         greaterThan:false
     }
 ]
 
@@ -118,27 +118,45 @@ class F{
       this.time;
     console.log("starting generator ...");
   }
+// INIT:
+// 1.STARTS THE FUNCTION TO GENERATE DATA
+// 2. CREATES THE SQL INSERT COMMAND BASED ON THE TABLE AND VALUES INSERTED
+// 3. INITIALIZES THE COPY BUTTON SO NOW YOU WILL BE ABLE TO SELECT ALL THE DATA
 
   init(){
       var self = this;
-      this.generateData();
+      self.generateData();
       self.insertInfo();
       $(this.copy).onclick = function(){
           self.selectText(self.result);
       }
   }
 
+// RANDOM:
+// RETURNS AN ARRAY WITH A RANDOM POSITION NUMBER INSIDE THE ARRAY
   random(max,min, arr){
       let num = Math.round(Math.random()*(min-max)+max);
   return arr[num];
 }//random
 
+// RANGE:
+// TAKES THE MAXIMUM AND MINIMUN VALUE OF THE RANGE AND RETURNS A RANDOM NUMBER
+range(max, min){
+     let num = Math.round(Math.random()*(min-max)+max);
+  return num;
+}
+
+// SECONDS:
+// CONVERTS THE MILLISECONDS OF THE CURRENT TIME MINUS THE PREVIOUS TIME
+// IN SECONDS
 seconds(prevTime, curTime){
     let time = curTime - prevTime;
     let seconds = time/1000;
     return seconds.toFixed(2);
 }
 
+// INSERT INFO:
+// CREATES THE SQL INSERT COMMAND WITH SPECIFIED VARIABLES
 insertInfo(){
     var self = this;
     var str = "",
@@ -157,11 +175,19 @@ insertInfo(){
 
 }
 
+// SET BUTTONS:
+// CHANGES THE DEFAULT BUTTONS TO START THE GENERATOR AND COPY THE 
+// GENERATED DATA
+
 setButtons(start, copy){
      this.start  = start || this.start;
      this.copy = copy || this.copy;
 
 }
+
+// SELECT TEXT:
+// WHEN CLICKING ON COPY THIS FUNCTION HIGHLIGHTS ALL THE GENERATED DATA SO THAT YOU CAN 
+// COPY AND PASTE INTO MYSQL
 
 selectText(selector) {
         if (document.selection) {
@@ -175,7 +201,13 @@ selectText(selector) {
         }
     }
 
-generateData(){
+// GENERATE DATA:
+// 1. CREATES A CLICK EVENT ON THE START SELECTOR 
+// 2. IF THERE IS NO NUMBER IN THE INPUT FIELD, THEN IT WILL ONLY GENERATE ONE
+//    ROW OF DATA
+// 3. RUNS THE FUNCTION GENERATE TO GENERATE THE FAKE DATA
+
+ generateData(){
     var
     start = this.start,
     input = this.input,
@@ -189,9 +221,14 @@ generateData(){
         self.generate(data, number)
     }
 
-
-
 }
+
+
+// RETURN RESULTS:
+// 1.INSERTS ALL THE FAKE DATA THAT HAS BEEN COLLECTED FROM THE RESULTS ARRAY AND 
+//   STUFFS IT INTO THE ALLDATA VARIABLE
+// 2. THE ALLDATA VARIABLE THEN OUTPUTS INTO THE RESULT SELECTOR
+// 3. THE TIME IT TOOK TO GENERATE ALL THE DATA GETS DISPLAYED IN THE TIME SELECTOR
 
 returnResults(results){
     var self  = this,
@@ -215,11 +252,9 @@ returnResults(results){
     $(self.timeOutput).innerHTML = seconds+" seconds";
 }
 
-
-
-
-
-
+// GENERATE DATA:
+// 1.LOOPS THROUGH THE SPECIFIED NUMBER OF DATA IT IS SUPPOSED TO GENERATE
+//     1
 generate(object,dataNumber){
     // keeps the current values of an object
 
@@ -234,8 +269,8 @@ generate(object,dataNumber){
 
 
     for(let x = 0 ; x < dataNumber; x++){
-        for( let obj of object){
-            let dependentValue = currentObj[obj.dependent] || "",
+        for( var obj of object){
+            var dependentValue = currentObj[obj.dependent] || "",
             value   = self.isNested(obj.nested,dependentValue, obj);
             if( obj.if ){
                 checkingCond = false
@@ -243,11 +278,13 @@ generate(object,dataNumber){
 
                 while( checkingCond === false){
 
-                    obj.between && arr.push(self.between(obj.between,currentObj[obj.dependent]));
-                    obj.not && arr.push(self.not(obj.not,currentObj[obj.dependent]));
-                    obj.equals && arr.push(self.equals(obj.equals,currentObj[obj.dependent]));
-                    obj.lessThan && arr.push(self.lessThan(obj.lessThan,currentObj[obj.dependent]),value);
-                    obj.greaterThan && arr.push(self.greaterThan(obj.greaterThan,currentObj[obj.dependent]),value);
+                    console.log(obj.lessThan)
+
+                    obj.between && arr.push(self.between(obj.between,dependentValue));
+                    obj.not && arr.push(self.not(obj.not,dependentValue));
+                    obj.equals && arr.push(self.equals(obj.equals,dependentValue));
+                    obj.lessThan && arr.push(self.lessThan(obj.lessThan,dependentValue,value));
+                    obj.greaterThan && arr.push(self.greaterThan(obj.greaterThan,dependentValue,value));
 
                     checkingCond = arr.every(function(value){
                         return value === true;
@@ -279,30 +316,40 @@ generate(object,dataNumber){
  self.returnResults(strArr);
 }//generate
 
-
+// IS NESTED:
+// 1.CHECKS TO SEE IF THE OBJECT HAS NESTED VALUES INSIDE IT
+// 2.THEN IT WILL CHECK IF THE OBJECT HAS A COLLECTION OF VALUES OR A RANGE OF VALUES
 isNested(nested, key, obj){
     var self = this;
     if(nested){
-        let val = obj.values[key];
-        return self.isMultiple(obj.multiple, val)
+        let nestedArray = obj.values[key];
+        return self.isRange(obj.range, nestedArray)
     }else{
-        return self.isMultiple(obj.multiple, obj.values)
+        return self.isRange(obj.range, obj.values)
     }
 
 }
 
+// IS RANGE:
+// CHECKS TO SEE THE OBJECT HAS A RANGE OF VALUES
+//     1. IF IT DOES THEN RUN THE RANGE FUNCTION THAT RANDOMIZE THE MAX AND MINIMUM VALUES
+//     2. IF IT DOES NOT HAVE A RANGE OF VALUES THEN JUST RUN A NORMAL RANDOMIZE FUNCTION
 
-isMultiple(multiple, arr){
+isRange(rangeExist, arr){
     var self = this;
     var min = 0, max = arr.length - 1;
-    if(multiple){
-        return self.random(max, min, arr)
+    if(rangeExist){
+        return self.range(arr[0], arr[1] )
     }else{
 
         return self.random(max,min, arr);
     }
 
 }
+
+
+// BETWEEN:
+// CHECKS TO SEE IF RANDOMIZED VALUE IS BETWEEN THE SPECIFIED VALUES
 
 between( between,  dependentVal){
     if( dependentVal > between[0] && dependentVal < between[1]){
@@ -313,6 +360,9 @@ between( between,  dependentVal){
 
 }//between
 
+// NOT:
+// CHECKS THE RANDOMIZED VALUE TO SEE IF IT IS NOT SPECIFIED VALUE
+
 not(not , dependentVal){
     if(dependentVal !== not.Argument ){
         return true;
@@ -320,6 +370,9 @@ not(not , dependentVal){
          return false;
     }
 }
+
+// EQUALS:
+// CHECKS TO SEE IF RANDOMIZED VALUE IS EQUAL TO SPECIFIED VALUE
 
 equals(equals , dependentVal){
     if(dependentVal == equals){
@@ -329,6 +382,10 @@ equals(equals , dependentVal){
     }
 }
 
+
+// LESS THAN:
+// CHECKS TO SEE IF RANDOMIZED VALUE IS LESS THAN SPECIFIED VALUE
+
 lessThan(less , dependentVal, value){
 
     if( dependentVal < less.Argument || less.Value <= value){
@@ -337,6 +394,9 @@ lessThan(less , dependentVal, value){
          return false;
     }
 }
+
+// GREATER THAN:
+// CHECKS TO SEE IF RANDOMIZED VALUE IS GREATER THAN SPECIFIED VALUE
 
 greaterThan(greater , dependentVal, value){
     if(dependentVal > greater.Argument || greater.Value >= value  ){
