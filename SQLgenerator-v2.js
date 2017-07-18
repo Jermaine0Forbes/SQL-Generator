@@ -89,7 +89,7 @@ var obj=[
          between:false,
          not: false,
          equals : false,
-         lessThan:150,
+         lessThan:{ Argument:150, Value:150},
          greaterThan:false
     }
 ]
@@ -252,7 +252,7 @@ returnResults(results){
     $(self.timeOutput).innerHTML = seconds+" seconds";
 }
 
-// GENERATE DATA:
+// GENERATE:
 // 1.LOOPS THROUGH THE SPECIFIED NUMBER OF DATA IT IS SUPPOSED TO GENERATE
 //     1
 generate(object,dataNumber){
@@ -278,12 +278,17 @@ generate(object,dataNumber){
 
                 while( checkingCond === false){
 
-                    console.log(obj.lessThan)
+                    // console.log(self)
 
                     obj.between && arr.push(self.between(obj.between,dependentValue));
                     obj.not && arr.push(self.not(obj.not,dependentValue));
                     obj.equals && arr.push(self.equals(obj.equals,dependentValue));
-                    obj.lessThan && arr.push(self.lessThan(obj.lessThan,dependentValue,value));
+                    if(obj.lessThan){
+                        // console.log(self.lessThan)
+                        let result = self.lessThan(obj.lessThan,dependentValue,value);
+                        arr.push(result);
+                    }
+                    // obj.lessThan && arr.push(self.lessThan(obj.lessThan,dependentValue,value));
                     obj.greaterThan && arr.push(self.greaterThan(obj.greaterThan,dependentValue,value));
 
                     checkingCond = arr.every(function(value){
@@ -387,8 +392,14 @@ equals(equals , dependentVal){
 // CHECKS TO SEE IF RANDOMIZED VALUE IS LESS THAN SPECIFIED VALUE
 
 lessThan(less , dependentVal, value){
+    // console.log("inside less than, dependent value is "+dependentVal);
+    
+    if (dependentVal === "" || dependentVal === null){
+        dependentVal = 1;
+        less.Argument = 0;
+     }
 
-    if( dependentVal < less.Argument || less.Value <= value){
+    if( dependentVal < less.Argument || less.Value >= value){
         return true;
     }else{
          return false;
@@ -399,7 +410,8 @@ lessThan(less , dependentVal, value){
 // CHECKS TO SEE IF RANDOMIZED VALUE IS GREATER THAN SPECIFIED VALUE
 
 greaterThan(greater , dependentVal, value){
-    if(dependentVal > greater.Argument || greater.Value >= value  ){
+    
+    if(dependentVal < greater.Argument || greater.Value <= value  ){
         return true;
     }else{
          return false;
