@@ -61,7 +61,7 @@ var obj=[
          greaterThan:false,
     },
     {
-         values:[18,70]
+         values:[16,70]
          ,
          type : "number",
          name : "age" ,
@@ -89,7 +89,7 @@ var obj=[
          between:false,
          not: false,
          equals : false,
-         lessThan:{ Argument:150, Value:150},
+         lessThan: false, //{ Argument:150, Value:150},
          greaterThan:false
     }
 ]
@@ -118,6 +118,39 @@ class F{
       this.time;
     console.log("starting generator ...");
   }
+
+ copyData(){
+    var 
+    self = this,
+    copy = self.copy,
+    copyClass = $(copy).className;
+
+    console.log("inside copy data") 
+    $(self.copy).addEventListener('click', function(event) {
+      var copyArea = document.querySelector('textarea#result');
+      copyArea.select();
+
+      try {
+        var successful = document.execCommand('copy');
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Copying text command was ' + msg);
+        $(copy).innerHTML = "Copied";
+        $(copy).className += " bg-success";
+         setTimeout(function(){
+            console.log("debug")
+            $(copy).className = copyClass;
+            $(copy).innerHTML = "Select All";
+        },1000);
+
+           // clearTimeout(time);
+
+
+      } catch (err) {
+        console.log('Oops, unable to copy');
+      }
+    });
+ } 
+
 // INIT:
 // 1.STARTS THE FUNCTION TO GENERATE DATA
 // 2. CREATES THE SQL INSERT COMMAND BASED ON THE TABLE AND VALUES INSERTED
@@ -127,9 +160,7 @@ class F{
       var self = this;
       self.generateData();
       self.insertInfo();
-      $(this.copy).onclick = function(){
-          self.selectText(self.result);
-      }
+      self.copyData();
   }
 
 // RANDOM:
@@ -141,6 +172,7 @@ class F{
 
 // RANGE:
 // TAKES THE MAXIMUM AND MINIMUN VALUE OF THE RANGE AND RETURNS A RANDOM NUMBER
+
 range(max, min){
      let num = Math.round(Math.random()*(min-max)+max);
   return num;
@@ -171,7 +203,7 @@ insertInfo(){
         str += self.column[x]+",";
     }
 
-    self.insert = `INSERT INTO ${table} (${str}) VALUES <br>`;
+    self.insert = `INSERT INTO ${table} (${str}) VALUES \n`;
 
 }
 
@@ -207,7 +239,7 @@ selectText(selector) {
 //    ROW OF DATA
 // 3. RUNS THE FUNCTION GENERATE TO GENERATE THE FAKE DATA
 
- generateData(){
+generateData(){
     var
     start = this.start,
     input = this.input,
@@ -244,17 +276,29 @@ returnResults(results){
             continue;
         }
 
-        allData += (y % 5 == 0)?results[y]+",<br>":results[y]+",";
+        allData += (y % 5 == 0)?results[y]+",\n":results[y]+",";
 
     }
     seconds = self.seconds(seconds,Date.now());
     $(selector).innerHTML = allData;
+    $(selector).style.display = "block";
     $(self.timeOutput).innerHTML = seconds+" seconds";
 }
 
 // GENERATE:
 // 1.LOOPS THROUGH THE SPECIFIED NUMBER OF DATA IT IS SUPPOSED TO GENERATE
-//     1
+// 2. LOOPS THROUGH  EACH COLUMN THAT WILL BE RANDOMLY GENERATED
+// 3. CHECKS TO SEE IF THE COLUMN HAS NESTED VALUES AND IF THE COLUMN WILL HAVE MULTIPLE
+//     VALUES OR A RANGE OF VALUES. THEN IT RANDOMLY GENERATES THE VALUE
+// 4. CHECKS TO SEE IF THERE ARE ANY CONDITIONAL STATEMENTS THE VALUE NEEDS TO PASS. IF 
+//     THERE ARE THEN IT REGENERATE THE VALUE UNTIL IT PASSES THE PROPER CONDITIONS 
+// 5. ASSIGNS THE VALUE TO THE CURRENT OBJECT, IF THE VALUE IS A STRING THEN THE VALUE WILL
+//     BE IN QUOTES, IF THE OBJECT IS THE LAST OBJECT OR COLUMN THEN REMOVE DO NOT ADD A COMMA 
+//     AT THE END OF THE VALUE
+// 6. PUTS THE BLOCK OF VALUES IN PARENTHEISES, PUSHES THE VALUE INTO STRARR ARRAY,
+//     CLEARS THE VARIABLE THAT HOLDS THE GENERATED VALUES 
+// 7. CALLS RETURNRESULTS TO OUTPUT THE VALUES ONTO THE PAGE
+
 generate(object,dataNumber){
     // keeps the current values of an object
 
@@ -267,44 +311,12 @@ generate(object,dataNumber){
         self = this;
         self.time = Date.now();
 
-
     for(let x = 0 ; x < dataNumber; x++){
         for( var obj of object){
             var dependentValue = currentObj[obj.dependent] || "",
             value   = self.isNested(obj.nested,dependentValue, obj);
-            if( obj.if ){
-                checkingCond = false
-                    arr = [true];
 
-                while( checkingCond === false){
-
-                    // console.log(self)
-
-                    obj.between && arr.push(self.between(obj.between,dependentValue));
-                    obj.not && arr.push(self.not(obj.not,dependentValue));
-                    obj.equals && arr.push(self.equals(obj.equals,dependentValue));
-                    if(obj.lessThan){
-                        // console.log(self.lessThan)
-                        let result = self.lessThan(obj.lessThan,dependentValue,value);
-                        arr.push(result);
-                    }
-                    // obj.lessThan && arr.push(self.lessThan(obj.lessThan,dependentValue,value));
-                    obj.greaterThan && arr.push(self.greaterThan(obj.greaterThan,dependentValue,value));
-
-                    checkingCond = arr.every(function(value){
-                        return value === true;
-                    })
-
-                    if(!checkingCond){
-                        value = self.isNested(obj.nested,currentObj[obj.dependent], obj);
-                        arr = [];
-                    }
-
-
-                }//while
-
-
-            }//if
+            (obj.if)? value = self.ifConditionalsExist(obj, value, dependentValue, currentObj) : '';
 
             currentObj[obj.name] = value;
             value = (obj.type == "string")?`'${value}'`:value;
@@ -321,9 +333,46 @@ generate(object,dataNumber){
  self.returnResults(strArr);
 }//generate
 
+// IF CONDITIONALS EXIST:
+// 1. RUN LOOP UNTIL THE VALUE PASSES ALL CONDITIONS THAT WERE SET
+// 2. IF ANY OF THE CONDITIONAL HAS VALUES IT WILL BE PUSH THE RESULT (TRUE/FALSE)
+//     INTO AN ARRAY
+// 3. IT WILL CHECK IF ALL THE CONDITIONS RETURN TRUE, IF THEY DON'T, THEN IT WILL GENERATE
+//      A NEW VALUE
+
+ifConditionalsExist(obj, value, dependentValue, currentObj){
+    var 
+    self = this,
+    checkingCond = false,
+    arr = [true];
+
+    while( checkingCond === false){
+
+        obj.between && arr.push(self.between(obj.between,dependentValue));
+        obj.not && arr.push(self.not(obj.not,dependentValue));
+        obj.equals && arr.push(self.equals(obj.equals,dependentValue));
+        obj.lessThan && arr.push(self.lessThan(obj.lessThan,dependentValue,value));
+        obj.greaterThan && arr.push(self.greaterThan(obj.greaterThan,dependentValue,value));
+
+        checkingCond = arr.every(function(value){
+            return value === true;
+        })
+
+        if(!checkingCond){
+            value = self.isNested(obj.nested,currentObj[obj.dependent], obj);
+            arr = [];
+        }
+
+    }//while
+
+    return value;
+
+}// ifConditionalsExist
+
 // IS NESTED:
 // 1.CHECKS TO SEE IF THE OBJECT HAS NESTED VALUES INSIDE IT
 // 2.THEN IT WILL CHECK IF THE OBJECT HAS A COLLECTION OF VALUES OR A RANGE OF VALUES
+
 isNested(nested, key, obj){
     var self = this;
     if(nested){
@@ -420,6 +469,6 @@ greaterThan(greater , dependentVal, value){
 
 }// class F
 
-var gen = new F(obj, "user", ["sex","first_name","last_name","age","weight"]);
+var gen = new F(obj, "people", ["sex","first_name","last_name","age","weight"]);
 // console.log(gen)
 gen.init();
